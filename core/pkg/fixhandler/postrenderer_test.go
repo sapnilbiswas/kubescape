@@ -46,6 +46,12 @@ func TestPostRenderer_Validation(t *testing.T) {
 		assert.Error(t, err, "Unsafe outputDir %q must return error", unsafe)
 		assert.Contains(t, err.Error(), "contains unsafe characters")
 	}
+
+	nonExistentOut := filepath.Join(tmp, "does-not-exist")
+	err = EmitPostRenderer("unsafe\npath", nonExistentOut)
+	assert.Error(t, err)
+	_, statErr := os.Stat(nonExistentOut)
+	assert.True(t, os.IsNotExist(statErr), "output directory should not be created when validation fails")
 }
 
 func TestPostRenderer_ScriptGenerationAndPermissions(t *testing.T) {

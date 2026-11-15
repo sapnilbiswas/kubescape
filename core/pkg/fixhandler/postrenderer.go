@@ -74,11 +74,33 @@ func EmitPostRenderer(kustomizeDir, outputDir string) error {
 	if !isSafeScriptPath(kustomizeDir) {
 		return fmt.Errorf("kustomize directory %q contains unsafe characters", kustomizeDir)
 	}
+
+	cleanKustDir, err := filepath.Abs(kustomizeDir)
+	if err != nil {
+		cleanKustDir = kustomizeDir
+	}
+	if !isSafeScriptPath(cleanKustDir) {
+		return fmt.Errorf("resolved kustomize directory %q contains unsafe characters", cleanKustDir)
+	}
+
+	kustBaseName := filepath.Base(cleanKustDir)
+	if !isSafeScriptPath(kustBaseName) {
+		return fmt.Errorf("kustomize base directory %q contains unsafe characters", kustBaseName)
+	}
+
 	if outputDir == "" {
 		return fmt.Errorf("output directory cannot be empty")
 	}
 	if !isSafeScriptPath(outputDir) {
 		return fmt.Errorf("output directory %q contains unsafe characters", outputDir)
+	}
+
+	cleanOutputDir, err := filepath.Abs(outputDir)
+	if err != nil {
+		cleanOutputDir = outputDir
+	}
+	if !isSafeScriptPath(cleanOutputDir) {
+		return fmt.Errorf("resolved output directory %q contains unsafe characters", cleanOutputDir)
 	}
 
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
@@ -90,13 +112,6 @@ func EmitPostRenderer(kustomizeDir, outputDir string) error {
 		return fmt.Errorf("failed to open output directory %q: %w", outputDir, err)
 	}
 	defer root.Close()
-
-	cleanKustDir, err := filepath.Abs(kustomizeDir)
-	if err != nil {
-		cleanKustDir = kustomizeDir
-	}
-
-	kustBaseName := filepath.Base(cleanKustDir)
 
 	// 1. Generate POSIX Bash post-renderer script
 	shContent := fmt.Sprintf(`#!/usr/bin/env bash
